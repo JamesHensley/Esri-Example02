@@ -1,0 +1,11 @@
+<!-- The content below is only a placeholder and can be replaced. -->
+<div class="title">
+</div>
+
+<app-esri-map
+  [center]="mapCenter"
+  [basemap]="basemapType"
+  [zoom]="mapZoomLevel"
+  (mapLoadedEvent)="mapLoadedEvent($event)"
+>
+</app-esri-map>

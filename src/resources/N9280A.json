@@ -1,0 +1,46 @@
+[
+	{
+		"timestamp": 1607522754,
+		"coord": [
+			-75.1313,
+			40.3128
+		],
+		"alt": 14,
+		"gs": 104,
+		"type": "",
+		"isolated": false
+	},
+	{
+		"timestamp": 1607523142,
+		"coord": [
+			-75.1288,
+			40.3132
+		],
+		"alt": 14,
+		"gs": 108,
+		"type": "",
+		"isolated": false
+	},
+	{
+		"timestamp": 1607523587,
+		"coord": [
+			-75.1277,
+			40.3135
+		],
+		"alt": 14,
+		"gs": 110,
+		"type": "",
+		"isolated": false
+	},
+	{
+		"timestamp": 1607524091,
+		"coord": [
+			-75.128,
+			40.3137
+		],
+		"alt": 15,
+		"gs": 110,
+		"type": "",
+		"isolated": false
+	}
+]

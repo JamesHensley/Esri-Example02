@@ -1,0 +1,16 @@
+/* import the required JSAPI css */
+@import url('https://js.arcgis.com/4.17/esri/css/main.css');
+
+.esri-view {
+  height: 500px;
+}
+
+div#catFilter {
+  cursor: pointer;
+}
+
+div.esri-time-sliderXX {
+  display: block;
+  padding-left: 20px;
+  padding-right: 20px;
+}
