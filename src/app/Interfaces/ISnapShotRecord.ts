@@ -7,4 +7,5 @@ export interface ISnapShotRecord {
     "isolated": boolean;
     "latitude"?: number;
     "longitude"?: number;
+    "flightNum"?: string;
 }

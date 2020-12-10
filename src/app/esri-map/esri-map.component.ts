@@ -15,7 +15,6 @@ import { ISnapShotRecord } from '../Interfaces/ISnapShotRecord';
 import { loadModules } from "esri-loader";
 import esri = __esri; // Esri TypeScript Types
 import { Guid } from 'typescript-guid';
-import { IFlightRecord } from '../Interfaces/IFlightRecord';
 
 // import { stringify } from 'querystring';
 // import { filter } from 'esri/core/promiseUtils';
@@ -75,17 +74,39 @@ export class EsriMapComponent implements OnInit, OnDestroy {
       ]);
 
       this._map = new EsriMap({ basemap: this._basemap } as esri.MapProperties);
-
-      fetch('/resources/N1724U.json')
-      .then(data => data.json())
-      .then(data => (data as Array<ISnapShotRecord>))
-      .then(data => data.map(d => {
-        // Create latitude & longitude from our COORD field
-        d.latitude = d.coord[0];
-        d.longitude = d.coord[1];
-        return d;
-      }))
-      .then(data => data.map(d => {
+      Promise.all(
+        [
+          '/resources/N6NJ.json',
+          '/resources/N215LP-2.json',
+          '/resources/N298MC-2.json',
+          '/resources/N528SV.json',
+          '/resources/N580C.json',
+          '/resources/N681MA.json',
+          '/resources/N682MA.json',
+          '/resources/N872SP.json',
+          '/resources/N1724U.json',
+          '/resources/N3576M.json',
+          '/resources/N9280A-2.json'
+        ].map(url => fetch(url)
+          .then(data => data.json())
+          .then(data => (data as Array<ISnapShotRecord>))
+          .then(data => data.map(d => {
+            // Create latitude & longitude from our COORD field
+            d.flightNum = url,
+            d.latitude = d.coord[0];
+            d.longitude = d.coord[1];
+            return d;
+          }))
+          .catch(reason => {
+            console.log('Failed Fetch or Formatting', reason);
+            return new Array<ISnapShotRecord>();
+          })
+        )
+      )
+      .then(results => results.reduce((t: Array<ISnapShotRecord>, n: Array<ISnapShotRecord>) => {
+        return [].concat.apply(t, n) as Array<ISnapShotRecord>;
+      }, []))
+      .then(data => data.map((d: ISnapShotRecord) => {
         // Create geometry for the items in our list
         return {
           geometry: { type: "point", x: d.latitude, y: d.longitude },
@@ -98,10 +119,12 @@ export class EsriMapComponent implements OnInit, OnDestroy {
             gs: d.gs,
             alt: d.alt,
             type: d.type,
-            timestamp: d.timestamp
+            timestamp: d.timestamp * 1000,
+            flightNum: d.flightNum.split('/').pop().replace(/.json/, '')
           }
         }
       }))
+      .then(data => data.sort((a, b) => a.attributes.timestamp - b.attributes.timestamp))
       .then(data => {
         console.log('Objects to map: ', data);
 
@@ -114,10 +137,11 @@ export class EsriMapComponent implements OnInit, OnDestroy {
             { name: "title", alias: "title", type: "string" },
             { name: "latitude", alias: "Latitude", type: "string" },
             { name: "longitude", alias: "Longitude", type: "string" },
-            { name: "timestamp", alias: "timestamp", type: "date" },
+            { name: "timestamp", alias: "timeStamp", type: "date" },
             { name: "gs", alias: "gs", type: "integer" },
             { name: "alt", alias: "alt", type: "integer" },
-            { name: "type", alias: "type", type: "string" }
+            { name: "type", alias: "type", type: "string" },
+            { name: "flightNum", alias: "flightNum", type: "string" }
           ],
           renderer: {
             type: "simple",  // autocasts as new SimpleRenderer()
@@ -132,7 +156,7 @@ export class EsriMapComponent implements OnInit, OnDestroy {
             }
           },
           popupTemplate: {
-            title: "{timestamp}",
+            title: "{flightNum} {timestamp}",
             content: [{
               type: "fields",
               fieldInfos: [
@@ -147,11 +171,20 @@ export class EsriMapComponent implements OnInit, OnDestroy {
             fieldInfos: [
               { fieldName: "time", format: { dateFormat: "short-date-short-time" } }
             ]
+          },
+          timeExtent: {
+            start: new Date(data[0].attributes.timestamp),
+            end: new Date(data[data.length - 1].attributes.timestamp)
+          },
+          useViewTime: true,
+          timeInfo: {
+            startField: "timeStamp"
           }
         });
         this._map.add(this._featLayer);
-      });
 
+        console.log('Feat Layer: ', this._featLayer);
+      });
 
 
       // Initialize the MapView
@@ -163,7 +196,21 @@ export class EsriMapComponent implements OnInit, OnDestroy {
       });
 
       await this._view.when();
-
+      // Build the time slider
+      new TimeSlider({
+        container: this.timeSliderDivEl.nativeElement,
+        view: this._view,
+        mode: "time-window",
+        loop: true,
+        playRate: 250,
+        fullTimeExtent: this._featLayer.timeExtent,
+        stops: {
+          interval: {
+            value: 30,
+            unit: "seconds"
+          }
+        }
+      });
 
       return this._view;
     } catch (error) {
@@ -182,9 +229,9 @@ export class EsriMapComponent implements OnInit, OnDestroy {
       mapView.whenLayerView(this._featLayer)
       .then(layerView => {
         this._featLayerView = layerView;
-        layerView.watch("updating", (val) => {
-          console.log(this._view);
-        });
+        //layerView.watch("updating", (val) => {
+        //  console.log(this._view);
+        //});
       });
 
       this._loaded = this._view.ready;
