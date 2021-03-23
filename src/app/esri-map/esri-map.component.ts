@@ -15,6 +15,7 @@ import { ISnapShotRecord } from '../Interfaces/ISnapShotRecord';
 import { loadModules } from "esri-loader";
 import esri = __esri; // Esri TypeScript Types
 import { Guid } from 'typescript-guid';
+import { IFlightRecord } from '../Interfaces/IFlightRecord';
 
 // import { stringify } from 'querystring';
 // import { filter } from 'esri/core/promiseUtils';
@@ -74,6 +75,7 @@ export class EsriMapComponent implements OnInit, OnDestroy {
       ]);
 
       this._map = new EsriMap({ basemap: this._basemap } as esri.MapProperties);
+/*
       Promise.all(
         [
           '/resources/N6NJ.json',
@@ -106,7 +108,30 @@ export class EsriMapComponent implements OnInit, OnDestroy {
       .then(results => results.reduce((t: Array<ISnapShotRecord>, n: Array<ISnapShotRecord>) => {
         return [].concat.apply(t, n) as Array<ISnapShotRecord>;
       }, []))
-      .then(data => data.map((d: ISnapShotRecord) => {
+*/
+      fetch('./resources/allFlights2.json')
+      .then(results => results.json())
+      .then(results => results as Array<IFlightRecord>)
+      .then(flights => flights.map(f => {
+        f.track.map(d => {
+          d.flightNum = f.ident;
+          d.latitude = d.coord[0];
+          d.longitude = d.coord[1];
+        })
+        return f;
+      }))
+      .then(flights => {
+        let thisDate = new Date().getDate();
+
+        let x1 = flights.reduce((t: Array<ISnapShotRecord>, n: IFlightRecord) => {
+          console.log('Flight takeoff: ', n.ident, new Date(n.track[0].timestamp * 1000))
+          return [].concat.apply(t, n.track);
+        }, [])
+        .filter((f: ISnapShotRecord) => (new Date(f.timestamp * 1000)).getDate() == thisDate)
+        .sort((a: ISnapShotRecord, b: ISnapShotRecord) => a.timestamp - b.timestamp);
+        return x1      
+      })
+      .then((data: Array<ISnapShotRecord>) => data.map((d: ISnapShotRecord) => {
         // Create geometry for the items in our list
         return {
           geometry: { type: "point", x: d.latitude, y: d.longitude },
@@ -206,8 +231,8 @@ export class EsriMapComponent implements OnInit, OnDestroy {
         fullTimeExtent: this._featLayer.timeExtent,
         stops: {
           interval: {
-            value: 30,
-            unit: "seconds"
+            value: 1,
+            unit: "minutes"
           }
         }
       });

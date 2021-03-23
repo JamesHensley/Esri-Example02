@@ -6,7 +6,7 @@ import { EsriMapComponent } from "./esri-map/esri-map.component";
 // import { EsriFilterComponent } from "./esri-map/esri-filter.component";
 
 @NgModule({
-  declarations: [AppComponent, EsriMapComponent],
+  declarations: [AppComponent,  ],
   imports: [BrowserModule],
   providers: [],
   bootstrap: [AppComponent]
